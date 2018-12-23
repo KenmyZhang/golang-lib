@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+
+
+package grpcservice;
+
+
+
+//定义 service 
+
+service FetchService {
+
+  rpc Fetch(FetchRequest) returns (FetchResponse) {}
+
+}
+
+
+
+//定义方法入参  request 
+
+message FetchRequest {
+
+  string name = 1;
+
+  repeated int64 ids = 2;
+
+}
+
+//定义方法返回参数  response 
+
+message FetchResponse {
+
+   repeated string results = 1;
+
+}
