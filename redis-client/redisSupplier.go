@@ -1,12 +1,12 @@
 package redis_client
 
 import (
-	"github.com/KenmyZhang/golang-lib/metric"
-	"github.com/go-redis/redis"
-	log "github.com/KenmyZhang/golang-lib/zaplogger"
-	"time"
-	"encoding/gob"
 	"bytes"
+	"encoding/gob"
+	"github.com/KenmyZhang/golang-lib/middleware"
+	log "github.com/KenmyZhang/golang-lib/zaplogger"
+	"github.com/go-redis/redis"
+	"time"
 )
 
 var redisSupplier *RedisSupplier
@@ -30,10 +30,10 @@ func NewRedisSupplier(options *redis.Options) *RedisSupplier {
 }
 
 func redisStatCall(latency time.Duration, method string, err error) {
-	metric.CacheLatency.WithLabelValues(method).Observe(latency.Seconds() * 1000.0)
-	metric.CacheCounter.WithLabelValues(method).Inc()
+	middleware.CacheLatency.WithLabelValues(method).Observe(latency.Seconds() * 1000.0)
+	middleware.CacheCounter.WithLabelValues(method).Inc()
 	if nil != err && redis.Nil != err {
-		metric.CacheMissCounter.WithLabelValues(method).Inc()
+		middleware.CacheMissCounter.WithLabelValues(method).Inc()
 	}
 }
 
@@ -52,7 +52,6 @@ func (s *RedisSupplier) Setex(key string, value interface{}, expiry time.Duratio
 	return nil
 }
 
-
 func (s *RedisSupplier) Get(key string, value interface{}) error {
 	sTime := time.Now()
 	res, err := s.Client.Get(key).Bytes()
@@ -68,7 +67,6 @@ func (s *RedisSupplier) Get(key string, value interface{}) error {
 		return nil
 	}
 }
-
 
 func (s *RedisSupplier) Del(key string) error {
 	sTime := time.Now()

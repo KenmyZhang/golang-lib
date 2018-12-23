@@ -26,10 +26,10 @@ var (
 )
 
 const (
-	port        = 50051
+	port        = 50052
 	serviceName = "my_grpc_service"
 	consulAddr  = ":8500"
-	ip          = "127.0.0.1"
+	ip          = "192.168.200.147"
 )
 
 type server struct{}
@@ -66,28 +66,20 @@ func main() {
 	log.RedirectStdLog(logger)
 	log.InitGlobalLogger(logger)
 
-	router := gin.New()
-	router.Use(middleware.Prometheus())
-	router.Use(middleware.Recovery())
-	router.GET(middleware.DefaultMetricPath, middleware.GetMetrics)
-	router.GET("health", Health)
-
 	wg := &sync.WaitGroup{}
-	StartServer(wg, port)
 	consulClient := consul.NewConsulClient(consulAddr)
+	StartGrpcServer(wg, port)
 	consulClient.Register(serviceName, ip, port)
-	wg.Wait()
 
 	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR2)
+	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR2, syscall.SIGKILL)
 	<-ch
 	consulClient.Deregister(ip, port)
-	stopServer(wg)
+	StopGrpcServer(wg)
 	wg.Wait()
-
 }
 
-func StartServer(wg *sync.WaitGroup, port int) {
+func StartGrpcServer(wg *sync.WaitGroup, port int) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -111,13 +103,14 @@ func StartServer(wg *sync.WaitGroup, port int) {
 	}()
 }
 
-func stopServer(wg *sync.WaitGroup) {
+func StopGrpcServer(wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		if grpcServer != nil {
 			grpcServer.GracefulStop()
 			lis.Close()
+			log.Info("stop grpc server")
 		}
 	}()
 }

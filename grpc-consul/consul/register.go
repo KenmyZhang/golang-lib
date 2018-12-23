@@ -4,7 +4,6 @@ import (
 	"fmt"
 	log "github.com/KenmyZhang/golang-lib/zaplogger"
 	"github.com/hashicorp/consul/api"
-	"strings"
 )
 
 type ConsulClient struct {
@@ -21,23 +20,10 @@ func NewConsulClient(consulAddr string) *ConsulClient {
 	return &ConsulClient{Client: Client}
 }
 
-func (c *ConsulClient) loadConfigFromConsul(prefix string) (cfg map[string]string) {
-	cfg = make(map[string]string)
-	pairs, _, err := c.Client.KV().List(prefix, nil)
-	if err != nil {
-		panic(fmt.Sprintf("Load config from Consul fail, error: %v", err))
-	}
-	for _, pair := range pairs {
-		cfg[strings.Trim(strings.TrimPrefix(pair.Key, prefix), "/")] = string(pair.Value)
-	}
-	log.Info(fmt.Sprintf("Load config from Consul: %v.", cfg))
-	return cfg
-}
-
 func (c *ConsulClient) Register(serviceName, ip string, port int) {
 	if ip != "" {
 		id := fmt.Sprintf("grpc-%s-%d", ip, port)
-		log.Info("Register gRPC service %s." + id)
+		log.Info("Register gRPC service " + id)
 		reg := &api.AgentServiceRegistration{
 			ID:      id,
 			Name:    serviceName,
@@ -58,9 +44,12 @@ func (c *ConsulClient) Register(serviceName, ip string, port int) {
 func (c *ConsulClient) Deregister(ip string, port int) {
 	if ip != "" {
 		id := fmt.Sprintf("grpc-%s-%d", ip, port)
+		log.Info("Deregister gRPC service " + id)
 		err := c.Client.Agent().ServiceDeregister(id)
 		if err != nil {
 			log.Error(fmt.Sprintf("Deregister gRPC service fail, error: %v.", err))
+		} else {
+			log.Info("deregister grpc service success")
 		}
 	}
 }

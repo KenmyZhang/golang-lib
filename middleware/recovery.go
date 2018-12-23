@@ -8,7 +8,6 @@ import (
 	"net/http/httputil"
 	"runtime"
 
-	log "github.com/KenmyZhang/golang-lib/zaplogger"
 	"github.com/gin-gonic/gin"
 )
 
@@ -89,7 +88,7 @@ func Recovery() gin.HandlerFunc {
 
 				stack := stack(3)
 				httpRequest, _ := httputil.DumpRequest(c.Request, true)
-				log.Error(fmt.Sprintf("[Recovery] panic recovered:\n%s\n%s\n%s\n", string(httpRequest), err, stack))
+				fmt.Println(fmt.Sprintf("[Recovery] panic recovered:\n%s\n%s\n%s\n", string(httpRequest), err, stack))
 				ErrCounter.WithLabelValues(method, endPoint).Inc()
 				c.AbortWithStatus(http.StatusInternalServerError)
 			}
