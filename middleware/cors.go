@@ -30,7 +30,6 @@ func Cors(allowCorsFrom string, allowedMethods []string) gin.HandlerFunc {
 		}
 		c.Next()
 	}
-
 }
 
 func CheckOrigin(r *http.Request, allowedOrigins string) bool {
